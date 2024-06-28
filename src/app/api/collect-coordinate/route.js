@@ -42,6 +42,7 @@ export async function POST(request) {
 			gcoord.BD09
 		);
 		gps.wgs84 = [Number(rawGPS.lng), Number(rawGPS.lat)];
+		gps.speed = rawGPS.speed;
 		hasCoordinateValue = true;
 	}
 
@@ -89,6 +90,10 @@ export async function POST(request) {
 		}
 	};
 
+	await insertNewRow();
+	return new Response('insert ok');
+	
+	/*
 	// 获得当天最新一条数据
 	// 如果当天没有数据，直接插入
 	// 如果当天有数据，获得当天数据最新一条和当前数据比较
@@ -131,5 +136,5 @@ export async function POST(request) {
 	}
 
 	await updateRowById(id);
-	return new Response('update ok');
+	return new Response('update ok');*/
 }

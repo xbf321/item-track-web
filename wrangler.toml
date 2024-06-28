@@ -1,5 +1,5 @@
 #:schema node_modules/wrangler/config-schema.json
-name = "item-track"
+name = "item-track-web"
 compatibility_date = "2024-06-20"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".vercel/output/static"
@@ -12,7 +12,7 @@ pages_build_output_dir = ".vercel/output/static"
 [vars]
 # MY_VARIABLE = "production_value"
 PUSHER_SERVER_API = "http://message-pusher.sixwifi.com/push/root"
-PUSHER_SERVER_TOKEN = "x4f7f-920b-607d3fab1a98"
+# PUSHER_SERVER_TOKEN = "xx"
 
 # Bind a D1 database. D1 is Cloudflare’s native serverless SQL database.
 # Docs: https://developers.cloudflare.com/pages/functions/bindings/#d1-databases
