@@ -10,7 +10,7 @@ export default function AMap({ endPoint, lines }) {
 
   const DEFUALT_COORDINATE = [116.71601597742827, 39.51018439451933];
   useEffect(() => {
-    const { coordinate } = endPoint || {};
+    const { coordinate = DEFUALT_COORDINATE } = endPoint || {};
     if (typeof window !== "undefined") {
       window._AMapSecurityConfig = {
         securityJsCode: SecurityJsCode,
@@ -32,13 +32,14 @@ export default function AMap({ endPoint, lines }) {
               lineArr = lines;
             map = new AMap.Map("container", {
               resizeEnable: true,
-              zoom: 11,
+              zoom: 16,
               center: coordinate || DEFUALT_COORDINATE,
             });
-            var geolocation = new AMap.Geolocation({
+
+            const geolocation = new AMap.Geolocation({
               enableHighAccuracy: true,
               timeout: 10000,
-              offset: [30, 30],
+              offset: [30, 530],
               zoomToAccuracy: true,
               position: "RB",
             });
@@ -57,31 +58,31 @@ export default function AMap({ endPoint, lines }) {
             marker = new AMap.Marker({
               map: map,
               position: coordinate || DEFUALT_COORDINATE,
-              icon: "https://a.amap.com/jsapi_demos/static/demo-center-v2/car.png",
-              offset: new AMap.Pixel(-13, -26),
             });
 
             // 绘制轨迹
-            var polyline = new AMap.Polyline({
+            new AMap.Polyline({
               map: map,
               path: lineArr,
               showDir: true,
               strokeColor: "#28F",
-              strokeWeight: 6, //线宽
+              strokeWeight: 6,
             });
 
-            var passedPolyline = new AMap.Polyline({
+            const passedPolyline = new AMap.Polyline({
               map: map,
-              strokeColor: "#AF5", //线颜色
-              strokeWeight: 6, //线宽
+              strokeColor: "#AF5",
+              strokeWeight: 6,
             });
 
-            marker.on("moving", function (e) {
+            marker.on("moving", (e) => {
               passedPolyline.setPath(e.passedPath);
               map.setCenter(e.target.getPosition(), true);
             });
 
-            map.setFitView();
+            // map.setCenter(coordinate);
+
+            // map.setFitView();
 
             // window.setTimeout(() => {
             //   marker.moveAlong(lineArr, {
