@@ -120,7 +120,7 @@ export async function POST(request) {
 	const { id, gps: latestItemGPS, lbs: latestItemLBS } = latestItem[0];
 	const { wgs84: dbGPSWGS84 } = JSON.parse(latestItemGPS);
 	const { wgs84: dbLBSWGS84 } = JSON.parse(latestItemLBS);
-	const [dbLat, dbLng] = (dbGPSWGS84[0] > 1 && dbGPSWGS84[1] > 1) ? dbGPSWGS84 : dbLBSWGS84;
+	const [dbLng, dbLat] = (dbGPSWGS84[0] > 1 && dbGPSWGS84[1] > 1) ? dbGPSWGS84 : dbLBSWGS84;
 	const { lat: rawLat, lng: rawLng } = rawGPS.isFix ? rawGPS : rawLBS;
 
 	// 解决GPS静态漂移问题
@@ -149,7 +149,14 @@ export async function POST(request) {
 	}
 	await logCenter({
 		...body,
-		message: 'insert new row',
+		compare: {
+			rawLat,
+			rawLng,
+			dbLat,
+			dbLng
+		},
+		diff,
+		message: 'Insert new row',
 	});
 	await insertNewRow();
 	return new Response('insert new row');
