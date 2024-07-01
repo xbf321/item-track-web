@@ -17,70 +17,53 @@ export async function POST(request) {
 	const currentDateTime = dayjs().add(8, 'hour').format('YYYY-MM-DD HH:mm:ss');
 	const sendPusher = SendPusher(context.env);
 	const logCenter = LogCenter(context.env);
-	let hasCoordinateValue = false;
+
 	await logCenter({
 		...body,
 		message: 'Recieve GPS data',
 	});
+	
 	const {
-		imei = 0,
-		iccid = 0,
-		gps: rawGPS = {},
-		lbs: rawLBS = {},
-		csq = 0,
-		datetime: LocateDateTime = 0
+		// 获取GPS震动情况 0: 没震动 1 震动
+		shake = 0,
+		// 是否获得GPS，非LBS（基站定位）
+		gps: isGPS = false,
+		// gps 速度
+		speed = 0,
+		lat = 0,
+		lng = 0,
+		// 上报时间
+		time: LocateDateTime = 0
 	} = body;
+
+
 	const gps = {
-		gcj02: [0, 0],
-		bd09: [0, 0],
-		wgs84: [0, 0]
-	};
-
-	// 转换坐标
-	if (rawGPS.isFix) {
-		gps.gcj02 = gcoord.transform(
-			[rawGPS.lng || 0, rawGPS.lat || 0],
-			gcoord.WGS84,
-			gcoord.GCJ02
-		);
-		gps.bd09 = gcoord.transform(
-			[rawGPS.lng || 0, rawGPS.lat || 0],
-			gcoord.WGS84,
-			gcoord.BD09
-		);
-		gps.wgs84 = [Number(rawGPS.lng), Number(rawGPS.lat)];
-		gps.speed = Number(rawGPS.speed);
-		hasCoordinateValue = true;
-	}
-
-	const lbs = {
+		isGPS,
+		shake,
+		speed: Number(speed),
+		wgs84: [Number(lng), Number(lat)],
 		gcj02: gcoord.transform(
-			[rawLBS.lng || 0, rawLBS.lat || 0],
+			[Number(lng) || 0, Number(lat) || 0],
 			gcoord.WGS84,
 			gcoord.GCJ02
 		),
 		bd09: gcoord.transform(
-			[rawLBS.lng || 0, rawLBS.lat || 0],
+			[Number(lng) || 0, Number(lat) || 0],
 			gcoord.WGS84,
 			gcoord.BD09
 		),
-		wgs84: [Number(rawLBS.lng || 0), Number(rawLBS.lat || 0)]
 	};
-
-	if (Number(rawLBS.lng) > 0 && Number(rawLBS.lat) > 0) {
-		hasCoordinateValue = true;
-	}
-
-	if (hasCoordinateValue === false) {
+	if (gps.wgs84[0] + gps.wgs84[1] < 10) {
 		await logCenter({
 			...body,
-			message: 'None invalidate value',
+			message: 'The value of lat and lng goes wrong',
 		});
-		return new Response('None invalidate value');
+		return new Response('The value of lat and lng goes wrong');
 	}
+	
 
 	const insertNewRow = async () => {
-		const response = await context.env.DB.prepare('INSERT INTO records(imei, iccid, csq, gps, lbs, locate_datetime, create_datetime, update_datetime) VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)').bind(imei, iccid, csq, JSON.stringify(gps), JSON.stringify(lbs), LocateDateTime, currentDateTime, currentDateTime).all();
+		const response = await context.env.DB.prepare('INSERT INTO records(gps, locate_datetime, create_datetime, update_datetime) VALUES(?1, ?2, ?3, ?3)').bind(JSON.stringify(gps), LocateDateTime, currentDateTime).all();
 		// 插入失败，发送日志
 		if (response.success === false) {
 			await sendPusher('[Error] Insert item-track-db fail', {
@@ -91,7 +74,7 @@ export async function POST(request) {
 	};
 
 	const updateRowById = async (id) => {
-		const response = await context.env.DB.prepare('UPDATE records SET locate_datetime = ?2, update_datetime = ?3, gps = ?4, lbs = ?5 WHERE id = ?1').bind(id, LocateDateTime, currentDateTime, JSON.stringify(gps), JSON.stringify(lbs)).all();
+		const response = await context.env.DB.prepare('UPDATE records SET locate_datetime = ?2, update_datetime = ?3, gps = ?4  WHERE id = ?1').bind(id, LocateDateTime, currentDateTime, JSON.stringify(gps)).all();
 
 		// 失败，发送日志
 		if (response.success === false) {
@@ -106,7 +89,7 @@ export async function POST(request) {
 	// 获得当天最新一条数据
 	// 如果当天没有数据，直接插入
 	// 如果当天有数据，获得当天数据最新一条和当前数据比较
-	const { results: latestItem } = await context.env.DB.prepare("SELECT * FROM records WHERE locate_datetime >= date('now', 'start of day') AND imei = ?1  ORDER BY update_datetime DESC LIMIT 0,1").bind(imei).all();
+	const { results: latestItem } = await context.env.DB.prepare("SELECT * FROM records WHERE locate_datetime >= date('now', 'start of day') ORDER BY update_datetime DESC LIMIT 0,1").bind().all();
 	if (latestItem.length === 0) {
 		await insertNewRow();
 		await logCenter({
@@ -117,16 +100,14 @@ export async function POST(request) {
 	}
 
 	// 有最近一条数据
-	const { id, gps: latestItemGPS, lbs: latestItemLBS } = latestItem[0];
+	const { id, gps: latestItemGPS } = latestItem[0];
 	const { wgs84: dbGPSWGS84 } = JSON.parse(latestItemGPS);
-	const { wgs84: dbLBSWGS84 } = JSON.parse(latestItemLBS);
-	const [dbLng, dbLat] = (dbGPSWGS84[0] > 1 && dbGPSWGS84[1] > 1) ? dbGPSWGS84 : dbLBSWGS84;
-	const { lat: rawLat, lng: rawLng } = rawGPS.isFix ? rawGPS : rawLBS;
+	const [dbLng, dbLat] = dbGPSWGS84;
 
 	// 解决GPS静态漂移问题
 	// 通过数据发现，当设备静止时，speed 大部分在 1-0 之前，有的甚至超过 1 （这部分数据不正常，且不好过滤）
 	// 所有先过滤掉大部分（0.7以下数据）
-	if (rawGPS.isFix && gps.speed < MIN_SPEED) {
+	if (isGPS && gps.speed < MIN_SPEED) {
 		await updateRowById(id);
 		await logCenter({
 			...body,
@@ -137,27 +118,23 @@ export async function POST(request) {
 
 	//	-> 如果距离大于 特定值 ，则插入
 	//  -> 否则，不插入，更新当条数据
-	const diff = calculateDistance(rawLat, rawLng, dbLat, dbLng);
+	const diff = calculateDistance(lat, lng, dbLat, dbLng);
 	if (diff < MAX_DIFFERENCE) {
 		await updateRowById(id);
 		await logCenter({
 			...body,
 			diff,
-			message: 'overcome the max distance',
+			message: 'In the max cycle',
 		});
-		return new Response('update ok');
+		return new Response('In the max cycle');
 	}
 	await logCenter({
 		...body,
-		compare: {
-			rawLat,
-			rawLng,
-			dbLat,
-			dbLng
-		},
+		dbLat,
+		dbLng,
 		diff,
 		message: 'Insert new row',
 	});
 	await insertNewRow();
-	return new Response('insert new row');
+	return new Response('Insert new row');
 }
