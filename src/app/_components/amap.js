@@ -23,7 +23,6 @@ export default function AMap({ endPoint, lines }) {
           plugins: [
             "AMap.ToolBar",
             "AMap.MoveAnimation",
-            "AMap.Geolocation",
             "AMap.Scale",
           ],
         })
@@ -36,14 +35,6 @@ export default function AMap({ endPoint, lines }) {
               center: coordinate || DEFUALT_COORDINATE,
             });
 
-            const geolocation = new AMap.Geolocation({
-              enableHighAccuracy: true,
-              timeout: 10000,
-              offset: [30, 530],
-              zoomToAccuracy: true,
-              position: "RB",
-            });
-
             map.addControl(
               new AMap.ToolBar({
                 position: {
@@ -53,7 +44,6 @@ export default function AMap({ endPoint, lines }) {
               })
             );
             map.addControl(new AMap.Scale());
-            map.addControl(geolocation);
 
             marker = new AMap.Marker({
               map: map,

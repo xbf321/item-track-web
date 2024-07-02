@@ -1,4 +1,4 @@
-# 设备 Task
+# 设备主动上报任务
 
 [API](https://yinerda.yuque.com/yt1fh6/4gdtu/ngp5mg9s7uavzhdv)
 
@@ -10,15 +10,12 @@ function
   local nid=1
   local needup=1
   local count=0
-  local netsta=PronetGetNetSta(nid)
+  local netsta=0
   PronetStopProRecCh(1)
   UartStopProRecCh(1)
   GpsInit()
   GpsExecAgnss()
   LbsCheckLbs()
-  libgnss.on("raw", function(data)
-    log.info("GNSS", data)
-  end)
   while true do
     local d ={}
     d.time=os.date("%Y-%m-%d %H:%M:%S")
@@ -33,14 +30,16 @@ function
       d.lng,d.lat = GetLbs()
     end
     local updata = json.encode(d)
+    local netsta = PronetGetNetSta(nid)
     log.info(taskname,"updata",updata,"netsta",netsta)
     if needup ==1 and netsta ==1 then 
       needup =0
       count =0
       PronetSetSendCh(nid,updata)
+      log.info("sendData", updata)
     end
     count = count+1
-    if count > 60 then 
+    if count > 40 then 
       needup =1
       count =0
     end 

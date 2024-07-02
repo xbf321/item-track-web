@@ -43,3 +43,13 @@ npx wrangler d1 execute item-track-db --remote --file=./db-schema.sql
 ```bash
 npm run deploy
 ```
+
+## 文档
+
+[地图纠偏](https://old.openluat.com/GPS-Offset.html)
+
+[Air780说明](https://yinerda.yuque.com/yt1fh6/4gdtu/gsccog81mv0hpii7#K9Gdv)
+
+[高德地图文档](https://lbs.amap.com/demo/javascript-api-v2/example/map-lifecycle/loader)
+
+[Nextjs](https://nextjs.org/docs/getting-started/installation)

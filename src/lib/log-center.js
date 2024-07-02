@@ -5,12 +5,16 @@ export default function logCenter(env) {
     if (!env.LOG_CENTER_SERVER_API) {
       return;
     }
-    await fetch(env.LOG_CENTER_SERVER_API, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
+		try {
+			await fetch(env.LOG_CENTER_SERVER_API, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(body),
+			});
+		} catch(e) {
+			// do noting
+		}
   };
 }

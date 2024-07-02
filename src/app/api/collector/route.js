@@ -17,12 +17,6 @@ export async function POST(request) {
 	const currentDateTime = dayjs().add(8, 'hour').format('YYYY-MM-DD HH:mm:ss');
 	const sendPusher = SendPusher(context.env);
 	const logCenter = LogCenter(context.env);
-
-	await logCenter({
-		...body,
-		message: 'Recieve GPS data',
-	});
-	
 	const {
 		// 获取GPS震动情况 0: 没震动 1 震动
 		shake = 0,
@@ -33,9 +27,12 @@ export async function POST(request) {
 		lat = 0,
 		lng = 0,
 		// 上报时间
-		time: LocateDateTime = 0
+		dt: LocateDateTime = 0
 	} = body;
-
+	await logCenter({
+		...body,
+		message: 'Recieve GPS data',
+	});
 
 	const gps = {
 		isGPS,
