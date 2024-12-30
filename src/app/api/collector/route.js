@@ -13,6 +13,7 @@ const MIN_SPEED = 0.7;
 
 export async function POST(request) {
 	const context = getRequestContext();
+	const isDebug = request.url.indexOf('debug') > 0
 	const body = await request.json();
 	const currentDateTime = dayjs().add(8, 'hour').format('YYYY-MM-DD HH:mm:ss');
 	const sendPusher = SendPusher(context.env);
@@ -55,7 +56,7 @@ export async function POST(request) {
 			...body,
 			message: 'The value of lat and lng goes wrong',
 		});
-		return new Response('The value of lat and lng goes wrong');
+		return new Response(isDebug ? 'The value of lat and lng goes wrong' : '');
 	}
 	
 
@@ -93,7 +94,7 @@ export async function POST(request) {
 			...body,
 			message: 'Insert the first row of today',
 		});
-		return new Response('Insert the first row of today');
+		return new Response(isDebug ? 'Insert the first row of today' : '');
 	}
 
 	// 有最近一条数据
@@ -110,7 +111,7 @@ export async function POST(request) {
 			...body,
 			message: 'Filter 0.5 blow data',
 		});
-		return new Response('Filter 0.5 blow data');
+		return new Response(isDebug ? 'Filter 0.5 blow data' : '');
 	}
 
 	//	-> 如果距离大于 特定值 ，则插入
@@ -123,7 +124,7 @@ export async function POST(request) {
 			diff,
 			message: 'In the max cycle',
 		});
-		return new Response('In the max cycle');
+		return new Response(isDebug ? 'In the max cycle' : '');
 	}
 	await logCenter({
 		...body,
@@ -133,5 +134,5 @@ export async function POST(request) {
 		message: 'Insert new row',
 	});
 	await insertNewRow();
-	return new Response('Insert new row');
+	return new Response(isDebug ? 'Insert new row' : '');
 }
