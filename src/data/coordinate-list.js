@@ -1,6 +1,6 @@
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getRequestContext } from '@cloudflare/next-on-pages';
 
-export const runtime = "edge";
+export const runtime = 'edge';
 
 // 返回 gcj02 坐标
 function getCoordinate(gpsString) {
@@ -19,12 +19,17 @@ export default async function getList() {
   if (results.length === 0) {
     return response;
   }
-  const endPointItem = results[0];
+  const { locate_datetime, update_datetime, create_datetime, gps: gpsString } = results[0];
+
+  const gps = JSON.parse(gpsString);
+
   response.endPoint = {
-    locate_datetime: endPointItem.locate_datetime,
-    update_datatime: endPointItem.update_datatime,
-    coordinate: getCoordinate(endPointItem.gps),
+    locate_datetime,
+    update_datetime,
+    create_datetime,
+    gps,
   };
+
   // 转换并过滤数据
   response.lines = results.map((item) => {
     return getCoordinate(item.gps);

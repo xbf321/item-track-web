@@ -11,8 +11,6 @@ pages_build_output_dir = ".vercel/output/static"
 # - https://developers.cloudflare.com/pages/functions/bindings/#secrets
 [vars]
 # MY_VARIABLE = "production_value"
-PUSHER_SERVER_API = "http://message-pusher.sixwifi.com/push/root"
-# PUSHER_SERVER_TOKEN = "xx"
 
 # Bind a D1 database. D1 is Cloudflare’s native serverless SQL database.
 # Docs: https://developers.cloudflare.com/pages/functions/bindings/#d1-databases
